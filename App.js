@@ -9,6 +9,12 @@ import cartReducer from './store/reducers/cart';
 import ordersReducer from './store/reducers/orders';
 import ShopNavigator from './navigation/ShopNavigator';
 
+//Para clonar este proyecto y hacer que funcione:
+//eliminar package-lock.json y node-modules
+// usar las versiones correctas y actuales de las dependencias del package.json tomar como
+//referencia el project rn-meals-app!!
+//limpiar cache de react native ?  esto no sé si tuvo algun efecto
+
 const rootReducer = combineReducers({
   products: productsReducer,
   cart: cartReducer,
