@@ -55,6 +55,14 @@ const EditProductScreen = props => {
             style={styles.input}
             value={title}
             onChangeText={text => setTitle(text)}
+            keyboardType="default"
+            autoCapitalize="sentences"
+            autoCorrect
+            returnKeyType="next"//solo dice qué apariencia tendrá el boton de enter del teclado
+            //esto se dispara cuando hemos escrito algo en el campo y damos touch en cualquier otro lado
+            onEndEditing={() => console.log("onEndEditing")}
+            //esto se dispara cuando presionamos el boton de enter
+            onSubmitEditing={() => console.log("onSubmitEditing")}
           />
         </View>
         <View style={styles.formControl}>
@@ -72,6 +80,7 @@ const EditProductScreen = props => {
               style={styles.input}
               value={price}
               onChangeText={text => setPrice(text)}
+              keyboardType="number-pad"
             />
           </View>
         )}
