@@ -26,8 +26,17 @@ export const fetchProducts = () => {
 };
 
 export const deleteProduct = productId => {
-  return { type: DELETE_PRODUCT, pid: productId };
-};
+    return async dispatch => {
+      //firebase necesita que le mandemos el id en la url
+      const response = await fetch(`https://rn-shop-app-afcd8.firebaseio.com/products/${productId}.json`, {
+        method: 'DELETE',
+      });
+      if(!response.ok){
+        throw new Error("Couldn´t reach the server!");
+      }
+    dispatch({ type: DELETE_PRODUCT, pid: productId }) ;
+  };
+}
 
 export const createProduct = (title, description, imageUrl, price) => {
   //al configurar redux thunk en App.js y odemos usar asincronia para hacer algo antes de
@@ -71,13 +80,37 @@ export const createProduct = (title, description, imageUrl, price) => {
 };
 
 export const updateProduct = (id, title, description, imageUrl) => {
-  return {
-    type: UPDATE_PRODUCT,
-    pid: id,
-    productData: {
-      title,
-      description,
-      imageUrl,
+  return async dispatch => {
+    //firebase necesita que le mandemos el id en la url
+    const response = await fetch(`https://rn-shop-app-afcd8.firebaseio.com/products/${id}.jon`, {
+      method: 'PATCH',//patch solo actualiza los campos que sean necesarios
+      // a diferencia de PUT que reemplaza todo el objeto
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        title,
+        description,
+        imageUrl,
+        //price  el precio NO lo vamos a actualizar
+      })
+    });
+
+    if(!response.ok){
+      throw new Error("Couldn´t reach the server!");
     }
-  };
+
+    dispatch(
+      {
+        type: UPDATE_PRODUCT,
+        pid: id,
+        productData: {
+          title,
+          description,
+          imageUrl,
+        }
+      }
+    ) ;
+  }
+  
 };
