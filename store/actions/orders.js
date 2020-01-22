@@ -22,10 +22,11 @@ export const fetchOrders = () => {
 
 export const addOrder = (cartItems, totalAmount) => {
 
-  return async dispatch => {
+  return async (dispatch, getState) => {
+    const token = getState().auth.token;
     const date = new Date().toISOString();
       //creamos una ruta en firebase para cada user y sus orders
-      const response = await fetch('https://rn-shop-app-afcd8.firebaseio.com/orders/u1.json', {
+      const response = await fetch(`https://rn-shop-app-afcd8.firebaseio.com/orders/u1.json?auth=${token}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

@@ -26,9 +26,10 @@ export const fetchProducts = () => {
 };
 
 export const deleteProduct = productId => {
-    return async dispatch => {
+    return async (dispatch, getState) => {
+      const token = getState().auth.token;
       //firebase necesita que le mandemos el id en la url
-      const response = await fetch(`https://rn-shop-app-afcd8.firebaseio.com/products/${productId}.json`, {
+      const response = await fetch(`https://rn-shop-app-afcd8.firebaseio.com/products/${productId}.json?auth=${token}`, {
         method: 'DELETE',
       });
       if(!response.ok){
@@ -43,13 +44,14 @@ export const createProduct = (title, description, imageUrl, price) => {
   //de invocar al dispatch. el dispatch será invocado por redux thunk. nosotros devolvemos
   //un calllback que es el que justamente ejecutará redux thunk y nos pasa el dispatch para que 
   //nosotros decidamos en qué momento del callback se invocará el dispacth
-  return async dispatch => {
+  return async (dispatch, getState) => {
+    const token = getState().auth.token;
     //acá ponemos el codigo asincrono oque queramos!!
     //felizmente fetch está soportado en RN
     //al final de la url proporcionada por firebase, ponemos el nombre del recurso que
     //queremos afectar, es como la tabla , la cual debe terminar en .json , esto es 
     //requerido por firebase!
-    const response = await fetch('https://rn-shop-app-afcd8.firebaseio.com/products.json', {
+    const response = await fetch(`https://rn-shop-app-afcd8.firebaseio.com/products.json?auth=${token}`, {
       method: 'POST',//post porque es una operacion de creacion
       headers: {
         'Content-Type': 'application/json'
@@ -63,26 +65,41 @@ export const createProduct = (title, description, imageUrl, price) => {
       })
     });
 
-    const resData = response.json();
+    const resData = await response.json();
 
-    return {
-      type: CREATE_PRODUCT,
-      productData: {
-        id: resData.name,//id obtenido de firebase
-        title,
-        description,
-        imageUrl,
-        price
+    dispatch(
+      {
+        type: CREATE_PRODUCT,
+        productData: {
+          id: resData.name,//id obtenido de firebase
+          title,
+          description,
+          imageUrl,
+          price
+        }
       }
-    };
+    ) 
   }
   
 };
 
 export const updateProduct = (id, title, description, imageUrl) => {
-  return async dispatch => {
+  //redux thunk nos permite usar un callback para invocar a dispatch asincronamente
+  //pero tambien nos pasa como parametro al state general (combine reducers) en forma de funcion
+  return async (dispatch, getState) => {
+    const token = getState().auth.token;
+    //console.log(id,'/',token);
     //firebase necesita que le mandemos el id en la url
-    const response = await fetch(`https://rn-shop-app-afcd8.firebaseio.com/products/${id}.jon`, {
+    //firebase permite mandar el token de autenticacion para evaluar los permisos del user
+    //Para activar esa funcionalidad de validar users en firebase tenemos que editar 
+    //los rules de firebase , de nuestra database de esta forma:
+    // {
+    //   "rules": {
+    //     ".read": true,
+    //     ".write": "auth != null"
+    //   }
+    // }
+    const response = await fetch(`https://rn-shop-app-afcd8.firebaseio.com/products/${id}.json?auth=${token}`, {
       method: 'PATCH',//patch solo actualiza los campos que sean necesarios
       // a diferencia de PUT que reemplaza todo el objeto
       headers: {
