@@ -1,6 +1,29 @@
+//Este paquete sirve para guardar data EN EL DISPOSITIVO!!
+import { AsyncStorage } from 'react-native';
 
-export const SIGNUP = 'SIGNUP';
-export const LOGIN = 'LOGIN';
+
+//export const SIGNUP = 'SIGNUP';
+//export const LOGIN = 'LOGIN';
+
+export const AUTHENTICATE = 'AUTHENTICATE';
+export const LOGOUT = 'LOGOUT';
+
+let timer;
+
+export const authenticate = (userId, token, expiryTime) => {
+    //podemos despachar varias acciones usando redux thunk!!
+    return dispatch => {
+        //acá suscribimos el action creator que espera a que caduque el token y luego hace logout automatico
+        dispatch(setLogoutTimer(expiryTime));
+        //esta es la autenticacion normal!!
+        dispatch({
+            type: AUTHENTICATE,
+            userId: userId,
+            token: token
+        });
+    }
+
+}
 
 export const signup = (email, password) => {
     return async dispatch => {
@@ -31,8 +54,12 @@ export const signup = (email, password) => {
 
         const resData = await response.json();
 
-        console.log('***Signup',resData);
-        dispatch({type: SIGNUP, token: resData.idToken, userId: resData.localId});
+        //console.log('***Signup',resData);
+       // dispatch({type: SIGNUP, token: resData.idToken, userId: resData.localId});
+       dispatch(authenticate(resData.localId,resData.idToken, parseInt(resData.expiresIn) * 1000));
+
+        const expirationDate = new Date(new Date().getTime() + parseInt(resData.expiresIn) * 1000)
+        saveDataToStorage(resData.idToken,resData.localId, expirationDate);
     }
 }
 
@@ -67,7 +94,46 @@ export const login = (email, password) => {
 
         const resData = await response.json();
 
-        console.log('***Login',resData);
-        dispatch({type: LOGIN, token: resData.idToken, userId: resData.localId});
+       // console.log('***Login',resData);
+       // dispatch({type: LOGIN, token: resData.idToken, userId: resData.localId});
+      
+       dispatch(authenticate(resData.localId,resData.idToken, parseInt(resData.expiresIn) * 1000));
+
+        const expirationDate = new Date(new Date().getTime() + parseInt(resData.expiresIn) * 1000)
+        saveDataToStorage(resData.idToken,resData.localId, expirationDate);
     }
+}
+
+export const logout = () => {
+    clearLogoutTimer();
+    //No usaré async await para esto porque confiaré en que RN limpiará
+    //el storage del dispositivo y cualquier error ya sería del sistema operativo
+    AsyncStorage.removeItem("userData");
+    return {
+        type: LOGOUT
+    }
+}
+
+const clearLogoutTimer = () => {
+    if(timer){
+        clearTimeout(timer);
+    }
+}
+
+const setLogoutTimer = expirationTime => {
+    return dispatch => {
+        timer = setTimeout(() => {
+            dispatch(logout());
+        },expirationTime);
+    }
+}
+
+const saveDataToStorage = (token, userId, expirationDate) => {
+    //AsyncStorage solo acepta pares string: string
+    //por eso como queremos guardar objetos, usaremos stringify
+    AsyncStorage.setItem("userData",JSON.stringify({
+        token: token,
+        userId: userId,
+        expiryDate: expirationDate.toISOString()
+    }));
 }

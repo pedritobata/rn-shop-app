@@ -7,7 +7,8 @@ import Product from '../../models/product';
 export const fetchProducts = () => {
   //fecth por default es GET así que no requerimos de mas configuraciones para obtener
   //la lista de productos guardados!!
-  return async dispatch => {
+  return async (dispatch, getState) => {
+    const userId = getState().auth.userId;
     const response = await fetch('https://rn-shop-app-afcd8.firebaseio.com/products.json');
 
     const resData = await response.json();
@@ -15,12 +16,14 @@ export const fetchProducts = () => {
     //console.log(resData);
     const loadedProducts = [];
     for(const key in resData){
-      loadedProducts.push(new Product(key,'u1',
+      loadedProducts.push(new Product(key,userId,
       resData[key].title,resData[key].imageUrl,
       resData[key].description, resData[key].price));
     }
 
-    dispatch({type: SET_PRODUCTS, products: loadedProducts});
+    dispatch({type: SET_PRODUCTS, 
+      products: loadedProducts, 
+      userProducts: loadedProducts.filter(prod=> prod.ownerId === userId)});
   }
   
 };
@@ -46,6 +49,7 @@ export const createProduct = (title, description, imageUrl, price) => {
   //nosotros decidamos en qué momento del callback se invocará el dispacth
   return async (dispatch, getState) => {
     const token = getState().auth.token;
+    const userId = getState().auth.userId;
     //acá ponemos el codigo asincrono oque queramos!!
     //felizmente fetch está soportado en RN
     //al final de la url proporcionada por firebase, ponemos el nombre del recurso que
@@ -61,7 +65,8 @@ export const createProduct = (title, description, imageUrl, price) => {
         title,
         description,
         imageUrl,
-        price
+        price,
+        ownerId: userId
       })
     });
 
@@ -75,7 +80,8 @@ export const createProduct = (title, description, imageUrl, price) => {
           title,
           description,
           imageUrl,
-          price
+          price,
+          ownerId: userId
         }
       }
     ) 
